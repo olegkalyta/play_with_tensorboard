@@ -42,8 +42,11 @@ train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
+writer = tf.summary.FileWriter('logs/mnist_demo/1')
+writer.add_graph(sess.graph)
+
 sess.run(tf.global_variables_initializer())
-for i in range(20000):
+for i in range(1000):
     batch = mnist.train.next_batch(100)
     if i % 100 == 0:
         train_accuracy = accuracy.eval(feed_dict={x: batch[0], y: batch[1]})
