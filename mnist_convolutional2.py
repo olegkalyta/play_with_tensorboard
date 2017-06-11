@@ -9,21 +9,21 @@ sess = tf.InteractiveSession()
 
 def conv_layer(input, channels_in, channels_out, name="conv"):
     with tf.name_scope(name):
-        w = tf.Variable(tf.zeros([5, 5, channels_in, channels_out]), name="W")
-        b = tf.Variable(tf.zeros([channels_out]), name="B")
+        w = tf.Variable(tf.truncated_normal([5, 5, channels_in, channels_out]), name="W")
+        b = tf.Variable(tf.constant(0.1, shape=[channels_out]), name="B")
         conv = tf.nn.conv2d(input, w, strides=[1, 1, 1, 1], padding="SAME")
         act = tf.nn.relu(conv + b)
         tf.summary.histogram("weights", w)
         tf.summary.histogram("biases", b)
         tf.summary.histogram("activations", act)
 
-        return act
+        return tf.nn.max_pool(act, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME")
 
 
 def fc_layer(input, channels_in, channels_out, name="fc"):
     with tf.name_scope(name):
-        w = tf.Variable(tf.zeros([channels_in, channels_out]), name="W")
-        b = tf.Variable(tf.zeros([channels_out]), name="B")
+        w = tf.Variable(tf.truncated_normal([channels_in, channels_out]), name="W")
+        b = tf.Variable(tf.constant(0.1, shape=[channels_out]), name="B")
         act = tf.nn.relu(tf.matmul(input, w) + b)
         return act
 
@@ -33,11 +33,8 @@ y = tf.placeholder(tf.float32, shape=[None, 10], name="labels")
 x_image = tf.reshape(x, [-1, 28, 28, 1])
 
 conv1 = conv_layer(x_image, 1, 32, name="conv1")
-pool1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME")
-
-conv2 = conv_layer(pool1, 32, 64, name="conv2")
-pool2 = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME")
-flattened = tf.reshape(pool2, [-1, 7 * 7 * 64])
+conv2 = conv_layer(conv1, 32, 64, name="conv2")
+flattened = tf.reshape(conv2, [-1, 7 * 7 * 64])
 
 fc1 = fc_layer(flattened, 7 * 7 * 64, 1024, "fc1")
 logits = fc_layer(fc1, 1024, 10, "fc2")
@@ -57,7 +54,7 @@ with tf.name_scope("accuracy"):
 tf.summary.image("input", x_image, 3)
 
 merged_summary = tf.summary.merge_all()
-writer = tf.summary.FileWriter('logs/mnist_demo/3')
+writer = tf.summary.FileWriter('logs/mnist_demo/4')
 writer.add_graph(sess.graph)
 
 sess.run(tf.global_variables_initializer())
